@@ -37,6 +37,8 @@
 #include "obstacle_detector/utilities/figure_fitting.h"
 #include "obstacle_detector/utilities/math_utilities.h"
 
+#include <nav_msgs/OccupancyGrid.h>
+
 using namespace std;
 using namespace obstacle_detector;
 
@@ -151,6 +153,24 @@ void ObstacleExtractor::pclCallback(const sensor_msgs::PointCloud::ConstPtr pcl_
 
   for (const geometry_msgs::Point32& point : pcl_msg->points)
     input_points_.push_back(Point(point.x, point.y));
+
+  processPoints();
+}
+
+void ObstacleExtractor::mapUpdateCallback(const map_msgs::OccupancyGridUpdateConstPtr& update) {
+
+  unsigned int di = 0;
+  for (unsigned int y = 0; y < update->height ; ++y)
+  {
+    for (unsigned int x = 0; x < update->width ; ++x)
+    {
+      if(update->data[di++]  >= 100.0) // FIXME
+          input_points_.push_back(Point(x, y));
+    }
+  }
+
+  base_frame_id_ = update->header.frame_id;
+  stamp_ = update->header.stamp;
 
   processPoints();
 }
